@@ -1,10 +1,11 @@
-const VERSION = "0.0.0" as const;
+const VERSION = "0.0.1" as const;
 
 export type RouteScript = {
     compilerVersion: typeof VERSION,
     Project: {
         Name: string,
-        Author: string,
+        Authors: string[],
+        Url: string,
         Version: string,
         Description: string,
     },
@@ -39,7 +40,11 @@ export type RouteScriptExtend = {
     text?: string,
 	icon?: string,
 	comment?: string,
+
+    coord?: [number, number],//simple way to specify a movement (becomes to: coord, isWarp: false, isAway: false)
 }
+
+
 
 class RouteScriptBundler {
     bundle(script: UnbundledRouteScript): RouteScript {
