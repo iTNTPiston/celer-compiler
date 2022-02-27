@@ -1,5 +1,5 @@
 // Target compiler version
-const TARGET_VERSION = "1.0.0" as const;
+export const TARGET_VERSION = "1.0.0" as const;
 
 // Bundled Route script. This is what the engine side receives
 export type RouteScript = {
@@ -63,7 +63,7 @@ export const switchSection = <T>(
             return [errorString, undefined];
         });
         if(!module){
-            return errorHandler(name);
+            return errorHandler(name || "Unknown Error");
         }
         return moduleHandler(name, module as RouteModule);
     }
@@ -138,7 +138,7 @@ class RouteScriptBundler {
         }
     }
     private ensureProject(script: UnbundledRouteScript): RouteMetadata {
-        const project = {
+        const project:RouteMetadata = {
             Name: "Untitled Project",
             Authors: [],
             Url: "",
