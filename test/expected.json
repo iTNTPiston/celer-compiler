@@ -1,0 +1,74 @@
+{
+    "compilerVersion": "1.0.0",
+    "Project": {
+        "Name": "Test Project123",
+        "Authors": [],
+        "Url": "",
+        "Version": "0.0.0",
+        "Description": "A test project"
+    },
+    "Route": [
+        "section level text step",
+        "_Equipment<section level text step as preset>",
+        {
+            "_Equipment<section level preset extend>": {
+                "comment": "hello"
+            }
+        },
+        "TextStepSingle",
+        "_Equipment<t>",
+        {
+            "_Custom": {
+                "comment": "cool"
+            }
+        },
+        "single step",
+        "step 1",
+        "step 2",
+        {
+            "Test Section 1": [
+                "inner step",
+                "_Equipment<text step as preset>",
+                {
+                    "_Equipment<preset extend>": {
+                        "comment": "hello"
+                    }
+                },
+                "TextStepSingle",
+                "_Equipment<t>",
+                {
+                    "_Custom": {
+                        "comment": "cool"
+                    }
+                },
+                "single step",
+                "step 1",
+                "step 2"
+            ]
+        },
+        {
+            "Single Text Section": "single text"
+        },
+        {
+            "Single Text Section Include": "TextStepSingle"
+        },
+        {
+            "Single preset extend include": {
+                "_Custom": {
+                    "comment": "cool"
+                }
+            }
+        },
+        {
+            "section array include": [
+                "step 1",
+                "step 2"
+            ]
+        },
+        {
+            "section array include 2": [
+                "single step"
+            ]
+        }
+    ]
+}

@@ -3,6 +3,7 @@ import dukpy
 
 JS_INJECT = "\"JS_INJECT\""
 JS_INJECT_NEXT_LINE = "# JS_INJECT_NEXT_LINE"
+PY_INJECT = "# PY_INJECT"
 
 with open('src/ts/RouteScript.ts', "r") as tsSrc:
     print("Compiling...")
@@ -16,11 +17,18 @@ with open('src/js/invoke.js', "r") as invokeSrc:
 
 jsCode = systemJs + bundlerJs + invokeJs
 
-for pyFile in ["bundle.py", "bundle-watch.py"]:
+with open('src/py/common.py', "r") as commonSrc:
+    commonPy = "".join(line for line in commonSrc)
+
+for pyFile in ["bundle.py", "bundle-watch.py", "test-watch.py", "dev-watch.py"]:
     with open(f'src/py/{pyFile}', "r") as pySrc:
         pyLines = pySrc.readlines()
         print(f"Injecting... {pyFile}")
-        outLines = []
+        outLines = [
+            "# WARNING: This is a generated file\n",
+            "# You can edit it for prototyping, but please submit changes to the corresponding file in src/py\n",
+            "\n"
+        ]
         inject = False
         for l in pyLines:
             if inject:
@@ -28,6 +36,9 @@ for pyFile in ["bundle.py", "bundle-watch.py"]:
                 inject = False
             if l.strip() == JS_INJECT_NEXT_LINE:
                 inject = True
+            if l.strip() == PY_INJECT:
+                l = commonPy
+
             outLines.append(l)
     with open(f"g{pyFile}", "w+") as pyOut:
         print("Emitting...")

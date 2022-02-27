@@ -1,7 +1,10 @@
-import yaml
-import dukpy
-import sys
-import json
+# This is a standalone bundler. You can use this script by itself
+# The output is a minimized JSON, which can be distributed
+
+# Usage: py gbundle.py <inputPath>
+# Output: bundle.json
+
+# PY_INJECT
 
 def __main__():
     if len(sys.argv) < 2:
@@ -10,18 +13,12 @@ def __main__():
 
     inputFile = sys.argv[1]
     print(f"Bundling... {inputFile}")
-    rebuild(inputFile)
+    rebuildBundle(inputFile)
 
-def rebuild(inputFile):
-    with open(inputFile, "r") as f:
-        obj = yaml.load(f, Loader=yaml.FullLoader)
-        print(obj)
-    bundled = bundle(obj)
-    with open("bundle.json", "w+") as out:
-        json.dump(bundled, out)
-    print(f"Emitted bundle.json")
+def rebuildBundle(inputFile):
+    rebundleHelper(inputFile, False, True, invokeJsBundle)
 
-def bundle(obj):
+def invokeJsBundle(obj):
 # JS_INJECT_NEXT_LINE
     return dukpy.evaljs("JS_INJECT", input=obj)
 

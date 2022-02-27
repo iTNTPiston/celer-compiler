@@ -1,9 +1,9 @@
-# This is a standalone bundle & watch system. You can use this script by itself
-# The output is a minimized JSON, which can be distributed
+# Dev system. This script watches changes and recompiles the bundler and rebundles the script
+# This script won't work outside of the repo
 # Output is also hosted on your local computer, which can be used for integration testing with the engine side
 
-# Usage: py gbundle.py <inputPath> [<port>]
-# Output: bundle.json
+# Usage: py gdev-watch.py <inputPath> [<port>]
+# Output: bundle.json, bundler.js, bundle.raw.json
 # If port is not specified, default port is 2222
 
 # PY_INJECT
@@ -20,19 +20,16 @@ def __main__():
         port = int(sys.argv[2])
     else:
         print(f"Using default port {port}")
-    print(f"Bundling... {inputFile}")
+    print(f"Building... {inputFile}")
     rebuildBundle(inputFile)
 
     observer = watch_start(inputFile, rebuildBundle)
     host_loop(port)
     watch_stop(observer)
 
-def rebuildBundle(inputFile):
-    rebundleHelper(inputFile, False, True, invokeJsBundle)
 
-def invokeJsBundle(obj):
-# JS_INJECT_NEXT_LINE
-    return dukpy.evaljs("JS_INJECT", input=obj)
+def rebuildBundle(inputFile):
+    rebundleHelper(inputFile, True, False, tscompileAndInvokeBundler)
 
 __main__()
 
