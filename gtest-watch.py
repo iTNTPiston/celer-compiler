@@ -78,16 +78,17 @@ def rebundleHelper(inputPath, doEmitRaw, isCompact, bundleFunc):
     loadYamlPath(inputPath, obj)
     if doEmitRaw:
         with open(BUNDLE_RAW_JSON, "w+") as out:
-            if isCompact:
-                json.dump(obj, out)
-            else:
-                json.dump(obj, out, indent=4)
+            json.dump(obj, out, indent=4)
+            
         print(f"Emitted {BUNDLE_RAW_JSON}")
 
     bundled = bundleFunc(obj)
 
     with open(BUNDLE_JSON, "w+") as out:
-        json.dump(bundled, out, indent=4)
+        if isCompact:
+            json.dump(bundled, out, separators=(',', ':'))
+        else:
+            json.dump(bundled, out, indent=4)
     print(f"Emitted {BUNDLE_JSON}")
 
 def loadYamlPath(yamlPath, obj):
