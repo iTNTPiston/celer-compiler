@@ -31,7 +31,7 @@ class HostHandler(http.server.SimpleHTTPRequestHandler):
         return BUNDLE_JSON
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
-        super(HTTPRequestHandler, self).end_headers()
+        super(HostHandler, self).end_headers()
 
 def host_loop(port):
     with socketserver.TCPServer(("", port), HostHandler) as httpd:
@@ -91,7 +91,7 @@ def rebundleHelper(inputPath, doEmitRaw, isCompact, bundleFunc):
     print(f"Emitted {BUNDLE_JSON}")
 
 def loadYamlPath(yamlPath, obj):
-    if os.path.isfile(yamlPath):
+    if os.path.isfile(yamlPath) and yamlPath.endswith(".yaml"):
         obj.update(loadYamlFile(yamlPath))
     elif os.path.isdir(yamlPath):
         for subpath in os.listdir(yamlPath):
@@ -150,7 +150,7 @@ def invokeJsBundle(obj):
         setters:[],
         execute: function() {
             // Target compiler version
-            TARGET_VERSION = "1.0.0";
+            exports_1("TARGET_VERSION", TARGET_VERSION = "1.0.0");
             // Unbundled route script is what the bundler receives
             // The bundler processes __use__ directives and remove unused modules
             __use__ = "__use__";
@@ -172,7 +172,7 @@ def invokeJsBundle(obj):
                         return [errorString, undefined];
                     }), name = _a[0], module = _a[1];
                     if (!module) {
-                        return errorHandler(name);
+                        return errorHandler(name || "Unknown Error");
                     }
                     return moduleHandler(name, module);
                 }

@@ -22,7 +22,7 @@ class HostHandler(http.server.SimpleHTTPRequestHandler):
         return BUNDLE_JSON
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
-        super(HTTPRequestHandler, self).end_headers()
+        super(HostHandler, self).end_headers()
 
 def host_loop(port):
     with socketserver.TCPServer(("", port), HostHandler) as httpd:
@@ -82,7 +82,7 @@ def rebundleHelper(inputPath, doEmitRaw, isCompact, bundleFunc):
     print(f"Emitted {BUNDLE_JSON}")
 
 def loadYamlPath(yamlPath, obj):
-    if os.path.isfile(yamlPath):
+    if os.path.isfile(yamlPath) and yamlPath.endswith(".yaml"):
         obj.update(loadYamlFile(yamlPath))
     elif os.path.isdir(yamlPath):
         for subpath in os.listdir(yamlPath):
