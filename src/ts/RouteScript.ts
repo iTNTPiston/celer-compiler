@@ -1,5 +1,5 @@
 // Target compiler version
-export const TARGET_VERSION = "1.0.0" as const;
+export const TARGET_VERSION = "1.0.2" as const;
 
 // Bundled Route script. This is what the engine side receives
 export type RouteScript = {
@@ -32,8 +32,14 @@ export type RouteScriptExtend = {
     text?: string,
 	icon?: string,
 	comment?: string,
-
-    coord?: [number, number],//simple way to specify a movement (becomes to: coord, isWarp: false, isAway: false)
+    notes?: string,
+    "line-color"?: string,
+    coord?: number[],//simple way to specify a movement (becomes to: coord, isWarp: false, isAway: false)
+    movements?: {
+        to?: number[],
+        away?: boolean,
+        warp?: boolean,
+    }[]
 }
 //should only have one key
 type SingleProperty<T> = {
@@ -282,7 +288,7 @@ class RouteScriptBundler {
                         })
                     }
                 },(errorString)=>{
-                    "(!=) Bundler Error: Error when bundling section " + JSON.stringify(section) + ". Caused by: "+errorString;
+                    returnArray.push("(!=) Bundler Error: Error when bundling section " + JSON.stringify(section) + ". Caused by: "+errorString);
                 });
         });
         return returnArray;
