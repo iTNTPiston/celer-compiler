@@ -15,7 +15,9 @@ You need to install the following python modules:
 - pip install dukpy
 - pip install watchdog
 
-Download `gbundle.py` and `gbundle-watch.py` from the release page.
+Download `update.py` from the release page (or clone the repo).
+
+The update script will download the following 2 scripts from the main branch. You can use it to update the bundler in the future.
 
 ### `gbundle.py`
 This script takes in yaml route and emits JSON object
