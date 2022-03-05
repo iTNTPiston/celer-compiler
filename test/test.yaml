@@ -28,8 +28,8 @@ Route:
   - Single Text Section: single text
   - Single Text Section Include: __use__ TextStepSingle
   - Single preset extend section:
-    _Equipment<single>: 
-      comment: preset extend
+      _Equipment<single>: 
+        comment: preset extend
   - Single preset extend include: __use__ TextStepSinglePresetExtend
   - section array include: __use__ TextStepArrayMultiple
   - section array include 2: __use__ TextStepArraySingle

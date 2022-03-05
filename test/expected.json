@@ -1,5 +1,5 @@
 {
-    "compilerVersion": "1.0.0",
+    "compilerVersion": "1.0.2",
     "Project": {
         "Name": "Test Project123",
         "Authors": [],
@@ -51,6 +51,13 @@
         },
         {
             "Single Text Section Include": "TextStepSingle"
+        },
+        {
+            "Single preset extend section": {
+                "_Equipment<single>": {
+                    "comment": "preset extend"
+                }
+            }
         },
         {
             "Single preset extend include": {

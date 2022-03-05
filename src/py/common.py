@@ -6,6 +6,7 @@ import sys
 import os
 import json
 import time
+import logging
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import http.server
@@ -66,21 +67,25 @@ def watch_stop(observer):
 # Load Yaml Stuff
 def rebundleHelper(inputPath, doEmitRaw, isCompact, bundleFunc):
     obj = {}
-    loadYamlPath(inputPath, obj)
-    if doEmitRaw:
-        with open(BUNDLE_RAW_JSON, "w+") as out:
-            json.dump(obj, out, indent=4)
-            
-        print(f"Emitted {BUNDLE_RAW_JSON}")
+    try:
+        loadYamlPath(inputPath, obj)
+        if doEmitRaw:
+            with open(BUNDLE_RAW_JSON, "w+") as out:
+                json.dump(obj, out, indent=4)
+                
+            print(f"Emitted {BUNDLE_RAW_JSON}")
 
-    bundled = bundleFunc(obj)
+        bundled = bundleFunc(obj)
 
-    with open(BUNDLE_JSON, "w+") as out:
-        if isCompact:
-            json.dump(bundled, out, separators=(',', ':'))
-        else:
-            json.dump(bundled, out, indent=4)
-    print(f"Emitted {BUNDLE_JSON}")
+        with open(BUNDLE_JSON, "w+") as out:
+            if isCompact:
+                json.dump(bundled, out, separators=(',', ':'))
+            else:
+                json.dump(bundled, out, indent=4)
+        print(f"Emitted {BUNDLE_JSON}")
+    except:
+        logging.exception("")
+        print("Failed to bundle")
 
 def loadYamlPath(yamlPath, obj):
     if os.path.isfile(yamlPath) and yamlPath.endswith(".yaml"):
