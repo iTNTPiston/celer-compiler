@@ -1,5 +1,5 @@
 // Target compiler version
-export const TARGET_VERSION = "1.0.2" as const;
+export const TARGET_VERSION = "1.1.0" as const;
 
 // Bundled Route script. This is what the engine side receives
 export type RouteScript = {
@@ -34,6 +34,8 @@ export type RouteScriptExtend = {
 	comment?: string,
     notes?: string,
     "line-color"?: string,
+    "hide-icon-on-map"?: boolean,
+    "split-type"?: string,
     coord?: number[],//simple way to specify a movement (becomes to: coord, isWarp: false, isAway: false)
     movements?: {
         to?: number[],

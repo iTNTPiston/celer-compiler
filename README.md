@@ -134,10 +134,10 @@ The following table contains the properties you can set. The ones prefixed with 
 |comment|Add/override the comment. Only works if the step also has an icon|
 |notes|Add notes to the step|
 |line-color|Change line color on the map. Colors are specified with html syntax, such as `red`, `#ff0000`, or `rgb(255,0,0)`|
-|*hide-icon-on-map|True/False. If true, the icon of this step won't show on map|
+|hide-icon-on-map|True/False. If true, the icon of this step won't show on map|
 |coord|`[x, z]` or `[x, y, z]`. Location of this step. Can copy direction from objmap|
 |movements|See [Movements](#movements) section|
-|*split-type|Add/override the split type of this step|
+|split-type|Add/override the split type of this step. Valid values are case sentivity name of [the SplitType enum](https://github.com/iTNTPiston/celer-engine/blob/main/src/data/assembly/types.ts)|
 |*var-change|A map of variables to update|
 |*fury|Number of furies to use|
 |*gale|Number of gales to use|
