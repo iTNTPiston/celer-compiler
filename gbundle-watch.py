@@ -168,7 +168,7 @@ def invokeJsBundle(obj):
         setters:[],
         execute: function() {
             // Target compiler version
-            exports_1("TARGET_VERSION", TARGET_VERSION = "1.0.2");
+            exports_1("TARGET_VERSION", TARGET_VERSION = "1.1.0");
             // Unbundled route script is what the bundler receives
             // The bundler processes __use__ directives and remove unused modules
             __use__ = "__use__";
