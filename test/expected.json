@@ -1,5 +1,5 @@
 {
-    "compilerVersion": "1.2.1",
+    "compilerVersion": "2.0.0",
     "Project": {
         "Name": "Test Project123",
         "Authors": [],
@@ -75,6 +75,54 @@
         {
             "section array include 2": [
                 "single step"
+            ]
+        },
+        {
+            "Test Validation Section": [
+                "(^!) Bundler Error: Step extension cannot be null or undefined",
+                "(^!) Bundler Error: Step extension must be an object (mapping)",
+                "(^!) Bundler Error: Step extension cannot be null or undefined",
+                {
+                    "Test Validation 4": {}
+                },
+                "(^?) Bundler Warning: \"invalid-attr\" is not a valid attribute",
+                {
+                    "Test Validation 5": {}
+                },
+                "(^?) Bundler Warning: \"coord\" is ignored because it is not an array or it has the wrong number of values. Must be either [x, z] or [x, y, z]",
+                {
+                    "Test Validation 6": {}
+                },
+                "(^?) Bundler Warning: \"coord\" is ignored because it is not an array or it has the wrong number of values. Must be either [x, z] or [x, y, z]",
+                {
+                    "Test Validation 6a": {
+                        "coord": [
+                            1,
+                            2,
+                            3
+                        ]
+                    }
+                },
+                {
+                    "Test Validation 6b": {
+                        "coord": [
+                            1,
+                            2
+                        ]
+                    }
+                },
+                {
+                    "Test Validation 6c": {}
+                },
+                "(^?) Bundler Warning: \"coord\" is ignored because it is not an array or it has the wrong number of values. Must be either [x, z] or [x, y, z]",
+                {
+                    "Test Validation 7": {
+                        "coord": [
+                            0,
+                            0
+                        ]
+                    }
+                }
             ]
         }
     ]

@@ -5,15 +5,17 @@ JS_INJECT = "\"JS_INJECT\""
 JS_INJECT_NEXT_LINE = "# JS_INJECT_NEXT_LINE"
 PY_INJECT = "# PY_INJECT"
 
-with open('src/ts/RouteScript.ts', "r") as tsSrc:
-    print("Compiling...")
-    bundlerJs = dukpy.typescript_compile(" ".join(line for line in tsSrc)  )
+bundlerJs=""
+for tsSourceName in ["version.ts", "type.ts", "switch.ts", "RouteScriptBundler.ts"]:
+    with open(f'src/ts/{tsSourceName}', "r") as tsSrc:
+        print(f"Compiling... {tsSourceName}")
+        bundlerJs += dukpy.typescript_compile("".join(line for line in tsSrc)  )
 
 with open('src/js/system.js', "r") as systemSrc:
-    systemJs = " ".join(line for line in systemSrc)
+    systemJs = "".join(line for line in systemSrc)
 
 with open('src/js/invoke.js', "r") as invokeSrc:
-    invokeJs = " ".join(line for line in invokeSrc)
+    invokeJs = "".join(line for line in invokeSrc)
 
 jsCode = systemJs + bundlerJs + invokeJs
 

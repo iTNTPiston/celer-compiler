@@ -111,11 +111,14 @@ def loadYamlFile(yamlFile):
 
 def tscompileAndInvokeBundler(obj):
     print("Compiling...")
-    with open('src/ts/RouteScript.ts', "r") as tsSrc:
-        
-        bundlerJs = dukpy.typescript_compile(" ".join(line for line in tsSrc)  )
-        with open(BUNDLER_JS, "w+") as bundlerOut:
-            bundlerOut.write(bundlerJs)
+    bundlerJs=""
+    for tsSourceName in ["version.ts", "type.ts", "switch.ts", "RouteScriptBundler.ts"]:
+        with open(f'src/ts/{tsSourceName}', "r") as tsSrc:
+            print(f"Compiling... {tsSourceName}")
+            bundlerJs += f"/// {tsSourceName}\n"
+            bundlerJs += dukpy.typescript_compile("".join(line for line in tsSrc)  )
+    with open(BUNDLER_JS, "w+") as bundlerOut:
+        bundlerOut.write(bundlerJs)
         print(f"Emitted {BUNDLER_JS}")
 
     with open('src/js/system.js', "r") as systemSrc:
@@ -141,26 +144,70 @@ def rebuildBundle(inputFile):
 def invokeJsBundle(obj):
 # JS_INJECT_NEXT_LINE
     return dukpy.evaljs("""//A dummy impl of SystemJS
- var exports = { };
- var System = {
-     register: function(_, callback) {
-         var module = callback(function(name, val){ exports[name] = val; });
-         module.execute();
-     }
- };
- 
- // Expose bundler
- var bundler = function() { return exports["default"]; };System.register([], function(exports_1) {
-    var TARGET_VERSION, __use__, switchSection, switchModule, switchStep, switchSinglePropertyObject, ENABLE_DEBUG, debugInfo, RouteScriptBundler;
+// Predefine order of module loading
+var _MODULE_LOAD_ORDER = ["./version", "./type", "./switch", "./RouteScriptBundler"];
+var _modules = { };
+var _moduleLoadIndex = 0;
+var System = {
+    register: function(deps, moduleFunction) {
+        var moduleName = _MODULE_LOAD_ORDER[_moduleLoadIndex];
+        var module = {};
+        var moduleDefinition = moduleFunction(function(name, val){ module[name] = val; });
+        // Handle imports
+        var setters = moduleDefinition.setters;
+        for(var i = 0; i<setters.length;i++){
+            // Each setter matches deps
+            var setter = setters[i];
+            setter(_modules[deps[i]]);
+        }
+        // Load module
+        moduleDefinition.execute();
+        // Store module
+        _modules[moduleName] = module;
+        _moduleLoadIndex++;
+    }
+};
+
+// JS functions not supported by dukpy, so we supply our own implementation
+var Number = function(x) {
+    return parseFloat(x);
+}
+Number.isInteger = function(x) {
+    return x !== NaN && x !== Infinity && x !== -Infinity && Math.floor(x) === x;
+}
+
+var String = function(x) {
+    return x + "";
+}
+
+var Boolean = function(x){
+    return !!x;
+}
+
+// Expose bundler
+var _getBundler = function() { return _modules["./RouteScriptBundler"]["default"]; };System.register([], function(exports_1) {
+    var TARGET_VERSION;
     return {
         setters:[],
         execute: function() {
             // Target compiler version
-            exports_1("TARGET_VERSION", TARGET_VERSION = "1.2.1");
-            // Unbundled route script is what the bundler receives
-            // The bundler processes __use__ directives and remove unused modules
-            __use__ = "__use__";
-            // Helper functions to encapsulate error handling when parsing route script
+            exports_1("TARGET_VERSION", TARGET_VERSION = "2.0.0");
+        }
+    }
+});
+System.register([], function(exports_1) {
+    return {
+        setters:[],
+        execute: function() {
+        }
+    }
+});
+// Helper functions to encapsulate error handling when parsing route script
+System.register([], function(exports_1) {
+    var switchSection, switchModule, switchStep, switchSinglePropertyObject;
+    return {
+        setters:[],
+        execute: function() {
             exports_1("switchSection", switchSection = function (section, moduleHandler, errorHandler) {
                 if (!section) {
                     return errorHandler("Not a valid section: " + section);
@@ -220,7 +267,25 @@ def invokeJsBundle(obj):
                 var key = keys[0];
                 return okHandler(key, spo[key]);
             };
-            // Debug switch. Only works on bundler side
+        }
+    }
+});
+System.register(["./switch", "./version"], function(exports_1) {
+    var switch_1, version_1;
+    var __use__, ENABLE_DEBUG, debugInfo, RouteScriptBundler;
+    return {
+        setters:[
+            function (switch_1_1) {
+                switch_1 = switch_1_1;
+            },
+            function (version_1_1) {
+                version_1 = version_1_1;
+            }],
+        execute: function() {
+            // Unbundled route script is what the bundler receives
+            // The bundler processes __use__ directives and remove unused modules
+            __use__ = "__use__";
+            // Debug flag
             ENABLE_DEBUG = false;
             debugInfo = [];
             RouteScriptBundler = (function () {
@@ -228,7 +293,7 @@ def invokeJsBundle(obj):
                 }
                 RouteScriptBundler.prototype.bundle = function (script) {
                     return {
-                        compilerVersion: TARGET_VERSION,
+                        compilerVersion: version_1.TARGET_VERSION,
                         Project: this.ensureProject(script),
                         Route: this.bundleRoute(script, script.Route)
                     };
@@ -270,7 +335,7 @@ def invokeJsBundle(obj):
                     // First scan dependencies
                     var dependency = {};
                     route.forEach(function (section) {
-                        switchSection(section, function (_, module) {
+                        switch_1.switchSection(section, function (_, module) {
                             _this.scanDependencyForModule(dependency, "Route", module);
                         }, function () {
                             // Do not process dependency if error
@@ -297,13 +362,13 @@ def invokeJsBundle(obj):
                 };
                 RouteScriptBundler.prototype.scanDependencyForModule = function (dependency, name, module) {
                     var _this = this;
-                    switchModule(module, function (stringModule) {
+                    switch_1.switchModule(module, function (stringModule) {
                         _this.scanDependencyForStringStep(dependency, name, stringModule);
                     }, function () {
                         // Ignore preset extend
                     }, function (arrayModule) {
                         arrayModule.forEach(function (s) {
-                            switchStep(s, function (stringStep) {
+                            switch_1.switchStep(s, function (stringStep) {
                                 _this.scanDependencyForStringStep(dependency, name, stringStep);
                             }, function () {
                                 // Ignore preset extend
@@ -351,7 +416,7 @@ def invokeJsBundle(obj):
                     var _this = this;
                     var returnArray = [];
                     sections.forEach(function (section) {
-                        switchSection(section, function (name, module) {
+                        switch_1.switchSection(section, function (name, module) {
                             debugInfo.push(module);
                             var bundledModule = _this.bundleModule(script, undefined, cache, module);
                             if (name) {
@@ -359,11 +424,19 @@ def invokeJsBundle(obj):
                             }
                             else {
                                 //Flatten the array if it is an array
-                                switchModule(bundledModule, function (stringModule) {
+                                switch_1.switchModule(bundledModule, function (stringModule) {
                                     returnArray.push(stringModule);
                                 }, function (preset, extend) {
-                                    returnArray.push((_a = {}, _a[preset] = extend, _a));
-                                    var _a;
+                                    var warningOrError = [];
+                                    _this.ensureValidExtend(extend, function (validExtend) {
+                                        returnArray.push((_a = {}, _a[preset] = validExtend, _a));
+                                        var _a;
+                                    }, function (warning) {
+                                        warningOrError.push("(^?) Bundler Warning: " + warning);
+                                    }, function (error) {
+                                        warningOrError.push("(^!) Bundler Error: " + error);
+                                    });
+                                    returnArray.push.apply(returnArray, warningOrError);
                                 }, function (arrayModule) {
                                     arrayModule.forEach(function (m) { return returnArray.push(m); });
                                 }, function (errorString) {
@@ -395,7 +468,7 @@ def invokeJsBundle(obj):
                     else if (!unbundledModule) {
                         unbundledModule = "(!=) Bundler Error: Illegal Invocation of bundledModule(): Both name and unbundledModule are undefined. This is likely a bug in the bundler.";
                     }
-                    var bundledModule = switchModule(unbundledModule, function (stringModule) {
+                    var bundledModule = switch_1.switchModule(unbundledModule, function (stringModule) {
                         if (stringModule.trim().substring(0, 7) === "__use__") {
                             var moduleName = stringModule.substring(7).trim();
                             return _this.bundleModule(script, moduleName, cache);
@@ -404,24 +477,41 @@ def invokeJsBundle(obj):
                             return stringModule;
                         }
                     }, function (preset, extend) {
-                        // No action here
-                        return (_a = {},
-                            _a[preset] = extend,
-                            _a
-                        );
-                        var _a;
+                        var container = [];
+                        var warningOrError = [];
+                        _this.ensureValidExtend(extend, function (validExtend) {
+                            container.push((_a = {}, _a[preset] = validExtend, _a));
+                            var _a;
+                        }, function (warning) {
+                            warningOrError.push("(^?) Bundler Warning: " + warning);
+                        }, function (error) {
+                            warningOrError.push("(^!) Bundler Error: " + error);
+                        });
+                        container.push.apply(container, warningOrError);
+                        if (container.length === 1) {
+                            return container[0];
+                        }
+                        return container;
                     }, function (arrayModule) {
                         var returnArray = [];
                         arrayModule.forEach(function (s) {
-                            switchStep(s, function (stringStep) {
+                            switch_1.switchStep(s, function (stringStep) {
                                 var moduleName = _this.getModuleNameFromStep(stringStep);
                                 if (moduleName) {
                                     var bundledModule_1 = _this.bundleModule(script, moduleName, cache);
-                                    switchModule(bundledModule_1, function (stringModule) {
+                                    switch_1.switchModule(bundledModule_1, function (stringModule) {
                                         returnArray.push(stringModule);
                                     }, function (preset, extend) {
-                                        returnArray.push((_a = {}, _a[preset] = extend, _a));
-                                        var _a;
+                                        var warningOrError = [];
+                                        _this.ensureValidExtend(extend, function (validExtend) {
+                                            returnArray.push((_a = {}, _a[preset] = validExtend, _a));
+                                            var _a;
+                                        }, function (warning) {
+                                            warningOrError.push("(^?) Bundler Warning: " + warning);
+                                        }, function (error) {
+                                            warningOrError.push("(^!) Bundler Error: " + error);
+                                        });
+                                        returnArray.push.apply(returnArray, warningOrError);
                                     }, function (arrayModule) {
                                         // Flatten the array
                                         arrayModule.forEach(function (m) { return returnArray.push(m); });
@@ -433,10 +523,18 @@ def invokeJsBundle(obj):
                                     returnArray.push(stringStep);
                                 }
                             }, function (preset, extend) {
-                                returnArray.push((_a = {}, _a[preset] = extend, _a));
-                                var _a;
+                                var warningOrError = [];
+                                _this.ensureValidExtend(extend, function (validExtend) {
+                                    returnArray.push((_a = {}, _a[preset] = validExtend, _a));
+                                    var _a;
+                                }, function (warning) {
+                                    warningOrError.push("(^?) Bundler Warning: " + warning);
+                                }, function (error) {
+                                    warningOrError.push("(^!) Bundler Error: " + error);
+                                });
+                                returnArray.push.apply(returnArray, warningOrError);
                             }, function (errorString) {
-                                arrayModule.push("(!=) Bundler Error: Error when bundling " + JSON.stringify(s) + ". Caused by: " + errorString);
+                                returnArray.push("(!=) Bundler Error: Error when bundling " + JSON.stringify(s) + ". Caused by: " + errorString);
                             });
                         });
                         return returnArray;
@@ -454,6 +552,112 @@ def invokeJsBundle(obj):
                     }
                     return undefined;
                 };
+                RouteScriptBundler.prototype.ensureValidExtend = function (extend, successCallback, warningCallback, errorCallback) {
+                    if (extend === void 0) { extend = null | undefined; }
+                    if (!extend) {
+                        errorCallback("Step extension cannot be null or undefined");
+                        return;
+                    }
+                    if (!this.isObject(extend)) {
+                        errorCallback("Step extension must be an object (mapping)");
+                        return;
+                    }
+                    var validExtend = {};
+                    // Validate each field
+                    for (var key in extend) {
+                        switch (key) {
+                            // String
+                            case "text":
+                            case "comment":
+                            case "notes":
+                            case "line-color":
+                            case "split-type":
+                                validExtend[key] = String(extend[key]);
+                                break;
+                            // Number
+                            case "fury":
+                            case "gale":
+                            case "time-override":
+                                validExtend[key] = Number(extend[key]) || 0;
+                                break;
+                            // Boolean
+                            case "hide-icon-on-map":
+                                validExtend[key] = Boolean(extend[key]);
+                                break;
+                            // Special
+                            case "var-change":
+                                if (!this.isObject(extend[key])) {
+                                    warningCallback("\"var-change\" is ignored because it is not an object");
+                                    continue;
+                                }
+                                var validVarChange = {};
+                                for (var k in extend[key]) {
+                                    if (!Number.isInteger(extend[key][k])) {
+                                        warningCallback("Variable " + k + " in var-change is ignored because it is not an integer");
+                                    }
+                                    else {
+                                        validVarChange[k] = extend[key][k];
+                                    }
+                                }
+                                validExtend[key] = validVarChange;
+                                break;
+                            case "coord":
+                                if (!this.isCoordArray(extend[key])) {
+                                    warningCallback("\"coord\" is ignored because it is not an array or it has the wrong number of values. Must be either [x, z] or [x, y, z]");
+                                    continue;
+                                }
+                                validExtend[key] = extend[key].map(function (x) { return Number(x) || 0; });
+                                break;
+                            case "movements":
+                                if (!Array.isArray(extend[key])) {
+                                    warningCallback("\"movements\" is ignored because it is not an array");
+                                    continue;
+                                }
+                                var validMovements = [];
+                                //validMovements.push();
+                                // There is a bug in dukpy that causes an error in forEach here. So we use a regular for loop
+                                for (var i = 0; i < extend[key].length; i++) {
+                                    var movementobj = extend[key];
+                                    if (!this.isObject(movementobj)) {
+                                        warningCallback("\"movements[" + i + "] is ignored because it is not an object\"");
+                                    }
+                                    else if (!("to" in movementobj)) {
+                                        warningCallback("\"movements[" + i + "] is ignored because it is missing the required attribute \"to\"\"");
+                                    }
+                                    else if (!this.isCoordArray(movementobj["to"])) {
+                                        warningCallback("\"movements[" + i + "] is ignored because the \"to\" attribute is not valid.\"");
+                                    }
+                                    else {
+                                        var validMovement = {
+                                            to: movementobj["to"],
+                                            away: !!movementobj["away"],
+                                            warp: !!movementobj["warp"]
+                                        };
+                                        validMovements.push(validMovement);
+                                    }
+                                }
+                                // extend[key].forEach((movementobj, i)=>{
+                                // });
+                                validExtend[key] = validMovements;
+                                break;
+                            default:
+                                warningCallback("\"" + key + "\" is not a valid attribute");
+                        }
+                    }
+                    successCallback(validExtend);
+                };
+                RouteScriptBundler.prototype.isObject = function (obj) {
+                    return obj && typeof obj === "object" && !Array.isArray(obj);
+                };
+                RouteScriptBundler.prototype.isCoordArray = function (obj) {
+                    if (!Array.isArray(obj)) {
+                        return false;
+                    }
+                    if (obj.length !== 2 && obj.length !== 3) {
+                        return false;
+                    }
+                    return true;
+                };
                 return RouteScriptBundler;
             })();
             exports_1("default",new RouteScriptBundler());
@@ -461,7 +665,7 @@ def invokeJsBundle(obj):
     }
 });
 // Input JSON passed from python
- bundler().bundle(dukpy.input);
+_getBundler().bundle(dukpy.input);
 """, input=obj)
 
 __main__()

@@ -6,11 +6,11 @@ export type {
     RouteModule,
     RouteStep,
     RouteScriptExtend,
-} from "./src/ts/RouteScript";
+} from "./src/ts/type";
 export {
-    TARGET_VERSION,
     switchSection,
     switchModule,
     switchStep
-} from "./src/ts/RouteScript";
+} from "./src/ts/switch";
+export {TARGET_VERSION} from "./src/ts/version";
 

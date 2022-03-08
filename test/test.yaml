@@ -33,6 +33,25 @@ Route:
   - Single preset extend include: __use__ TextStepSinglePresetExtend
   - section array include: __use__ TextStepArrayMultiple
   - section array include 2: __use__ TextStepArraySingle
+
+  - Test Validation Section:
+    - Test Validation 1:
+    - Test Validation 2: 2
+    - Test Validation 3: false
+    - Test Validation 4:
+        invalid-attr: something
+    - Test Validation 5:
+        coord: wrong type
+    - Test Validation 6:
+        coord: [1, 2, 3, 4]
+    - Test Validation 6a:
+        coord: [1, 2, 3]
+    - Test Validation 6b:
+        coord: [1, 2]
+    - Test Validation 6c:
+        coord: [1]
+    - Test Validation 7:
+        coord: ["invalid", "type"]
     
 TextStepSingle: TextStepSingle
 TextStepSinglePreset: "_Equipment<t>"

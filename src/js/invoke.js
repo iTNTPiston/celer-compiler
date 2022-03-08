@@ -1,2 +1,2 @@
 // Input JSON passed from python
-bundler().bundle(dukpy.input);
+_getBundler().bundle(dukpy.input);

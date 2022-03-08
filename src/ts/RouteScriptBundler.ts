@@ -1,21 +1,6 @@
-// Target compiler version
-export const TARGET_VERSION = "1.2.1" as const;
-
-// Bundled Route script. This is what the engine side receives
-export type RouteScript = {
-    compilerVersion: typeof TARGET_VERSION,
-    Project: RouteMetadata,
-    Route: RouteSection[],
-}
-
-// Metadata containing project info
-export type RouteMetadata = {
-    Name: string,
-    Authors: string[],
-    Url: string,
-    Version: string,
-    Description: string,
-}
+import { switchModule, switchSection, switchStep } from "./switch";
+import { RouteScript, RouteModule, RouteSection, RouteScriptExtend, RouteStep, RouteMetadata } from "./type";
+import { TARGET_VERSION } from "./version";
 
 // Unbundled route script is what the bundler receives
 // The bundler processes __use__ directives and remove unused modules
@@ -24,117 +9,7 @@ type UnbundledRouteScript = Omit<RouteScript, "compilerVersion"> & {
     [key: string]: RouteModule
 };
 
-
-export type RouteSection = RouteModule | SingleProperty<RouteModule>
-export type RouteModule = RouteStep | RouteStep[];
-export type RouteStep = string | SingleProperty<RouteScriptExtend>;
-export type RouteScriptExtend = {
-    text?: string,
-	icon?: string,
-	comment?: string,
-    notes?: string,
-    "line-color"?: string,
-    "hide-icon-on-map"?: boolean,
-    "split-type"?: string,
-    "var-change"?: {[key: string]: number},
-    coord?: number[],//simple way to specify a movement (becomes to: coord, isWarp: false, isAway: false)
-    movements?: {
-        to?: number[],
-        away?: boolean,
-        warp?: boolean,
-    }[]
-}
-//should only have one key
-type SingleProperty<T> = {
-    [key: string]: T
-} 
-
-// Helper functions to encapsulate error handling when parsing route script
-
-export const switchSection = <T>(
-    section: RouteSection,
-    moduleHandler: (name: string | undefined, m: RouteModule)=>T,
-    errorHandler: (error: string)=>T
-):T => {
-    if(!section){
-        return errorHandler("Not a valid section: "+ section);
-    }
-    if(typeof section === "object" && !Array.isArray(section)){
-        const [name, module] = switchSinglePropertyObject<RouteModule|RouteScriptExtend, [string|undefined, RouteModule | undefined]>(section, (name, moduleOrExtend)=>{
-            // Need to further determine if module is a module or actually extend..
-            if(name.length > 0 && name[0] === "_"){
-                // if name starts with underscore, treat it as a step
-                return [undefined, section as RouteModule];
-            }
-            // Otherwise treat as section
-            return [name, moduleOrExtend as RouteModule];
-        }, (errorString)=>{
-            return [errorString, undefined];
-        });
-        if(!module){
-            return errorHandler(name || "Unknown Error");
-        }
-        return moduleHandler(name, module as RouteModule);
-    }
-    //If falls through, must be unnamed section (section is a module)
-    return moduleHandler(undefined, section as RouteModule);
-}
-
-export const switchModule = <T>(
-    module: RouteModule, 
-    stringHandler: (m: string)=>T, 
-    extendHandler: (preset: string, extend: RouteScriptExtend)=>T,
-    arrayHandler: (array: RouteStep[])=>T,
-    errorHandler: (error: string)=>T
-): T => {
-    if (typeof module === "string"){
-        return stringHandler(module);
-    }
-    if(!module){
-        return errorHandler("Not a valid step: " + JSON.stringify(module));
-    }
-    if (Array.isArray(module)){
-        return arrayHandler(module);
-    }
-    return switchSinglePropertyObject<RouteScriptExtend, T>(module, extendHandler, errorHandler);
-
-}
-
-export const switchStep = <T>(
-    step: RouteStep,
-    stringHandler: (m: string)=>T, 
-    extendHandler: (preset: string, extend: RouteScriptExtend)=>T,
-    errorHandler: (error: string)=>T
-):T => {
-    if (typeof step === "string"){
-        return stringHandler(step);
-    }
-    if(!step){
-        return errorHandler("Not a valid step: " + JSON.stringify(step));
-    }
-    if (Array.isArray(step)){
-        return errorHandler("Step cannot be an array: " + JSON.stringify(step));
-    }
-    return switchSinglePropertyObject<RouteScriptExtend, T>(step, extendHandler, errorHandler);
-}
- 
-const switchSinglePropertyObject = <T, R>(
-    spo: SingleProperty<T>,
-    okHandler: (key: string, value: T)=>R,
-    errorHandler: (error: string)=>R
-): R => {
-    if(!spo || typeof spo !== "object"){
-        return errorHandler("Not a valid step: " + JSON.stringify(spo));
-    }
-    const keys = Object.keys(spo);
-    if (keys.length !== 1){
-        return errorHandler("A valid step must have exactly 1 key, received: " + JSON.stringify(spo));
-    }
-    const key = keys[0];
-    return okHandler(key, spo[key]);
-}
-
-// Debug switch. Only works on bundler side
+// Debug flag
 const ENABLE_DEBUG = false;
 let debugInfo: any[] = [];
 
@@ -283,7 +158,15 @@ class RouteScriptBundler {
                             (stringModule)=>{
                                 returnArray.push(stringModule);
                             },(preset, extend)=>{
-                                returnArray.push({[preset]: extend});
+                                const warningOrError: RouteStep[] = [];
+                                this.ensureValidExtend(extend,(validExtend)=>{
+                                    returnArray.push({[preset]: validExtend});
+                                }, (warning)=>{
+                                    warningOrError.push("(^?) Bundler Warning: "+warning);
+                                }, (error)=>{
+                                    warningOrError.push("(^!) Bundler Error: "+error);
+                                });
+                                returnArray.push.apply(returnArray, warningOrError);
                             },(arrayModule)=>{
                                 arrayModule.forEach(m=>returnArray.push(m));
                             },(errorString)=>{
@@ -322,10 +205,20 @@ class RouteScriptBundler {
                     return stringModule;
                 }
             },(preset, extend)=>{
-                // No action here
-                return {
-                    [preset]: extend
-                };
+                const container: RouteStep[] = [];
+                const warningOrError: RouteStep[] = [];
+                this.ensureValidExtend(extend,(validExtend)=>{
+                    container.push({[preset]: validExtend});
+                }, (warning)=>{
+                    warningOrError.push("(^?) Bundler Warning: "+warning);
+                }, (error)=>{
+                    warningOrError.push("(^!) Bundler Error: "+error);
+                });
+                container.push.apply(container,warningOrError);
+                if(container.length === 1){
+                    return container[0];
+                }
+                return container;
             },(arrayModule)=>{
                 const returnArray: RouteStep[] = [];
                 arrayModule.forEach(s=>{
@@ -338,20 +231,36 @@ class RouteScriptBundler {
                                     (stringModule)=>{
                                         returnArray.push(stringModule);
                                     },(preset, extend)=>{
-                                        returnArray.push({[preset]: extend});
+                                        const warningOrError: RouteStep[] = [];
+                                        this.ensureValidExtend(extend,(validExtend)=>{
+                                            returnArray.push({[preset]: validExtend});
+                                        }, (warning)=>{
+                                            warningOrError.push("(^?) Bundler Warning: "+warning);
+                                        }, (error)=>{
+                                            warningOrError.push("(^!) Bundler Error: "+error);
+                                        });
+                                        returnArray.push.apply(returnArray, warningOrError);
                                     },(arrayModule)=>{
                                         // Flatten the array
                                         arrayModule.forEach(m=>returnArray.push(m));
                                     },(errorString)=>{
                                         returnArray.push("(!=) Bundler Error: Unexpected @279. Please contact developer. Message: "+errorString);
-                                    })
+                                    });
                             }else{
                                 returnArray.push(stringStep);
                             }
                         },(preset, extend)=>{
-                            returnArray.push({[preset]: extend});
+                            const warningOrError: RouteStep[] = [];
+                            this.ensureValidExtend(extend,(validExtend)=>{
+                                returnArray.push({[preset]: validExtend});
+                            }, (warning)=>{
+                                warningOrError.push("(^?) Bundler Warning: "+warning);
+                            }, (error)=>{
+                                warningOrError.push("(^!) Bundler Error: "+error);
+                            });
+                            returnArray.push.apply(returnArray, warningOrError);
                         },(errorString)=>{
-                            arrayModule.push("(!=) Bundler Error: Error when bundling " + JSON.stringify(s) + ". Caused by: "+errorString);
+                            returnArray.push("(!=) Bundler Error: Error when bundling " + JSON.stringify(s) + ". Caused by: "+errorString);
                         });
                 });
                 return returnArray;
@@ -370,6 +279,117 @@ class RouteScriptBundler {
             return step.substring(7).trim();
         }
         return undefined;
+    }
+
+    private ensureValidExtend(
+        extend: RouteScriptExtend | null | undefined, 
+        successCallback: (extend: RouteScriptExtend)=>void, 
+        warningCallback: (warningString: string)=>void, 
+        errorCallback: (errorString: string)=>void): void {
+        if(!extend){
+            errorCallback("Step extension cannot be null or undefined");
+            return;
+        }
+        if(!this.isObject(extend)){
+            errorCallback("Step extension must be an object (mapping)");
+            return;
+        }
+        const validExtend: RouteScriptExtend = {};
+        // Validate each field
+        for(const key in extend){
+            switch(key){
+                // String
+                case "text":
+                case "comment":
+                case "notes":
+                case "line-color":
+                case "split-type":
+                    validExtend[key] = String(extend[key]);
+                    break;
+                // Number
+                case "fury":
+                case "gale":
+                case "time-override":
+                    validExtend[key] = Number(extend[key]) || 0;
+                    break;
+                // Boolean
+                case "hide-icon-on-map":
+                    validExtend[key] = Boolean(extend[key]);
+                    break;
+                // Special
+                case "var-change":
+                    if(!this.isObject(extend[key])){
+                        warningCallback("\"var-change\" is ignored because it is not an object");
+                        continue;
+                    }
+                    const validVarChange: {[key: string]: number} = {};
+                    for(const k in extend[key]){
+                        if(!Number.isInteger(extend[key][k])){
+                            warningCallback(`Variable ${k} in var-change is ignored because it is not an integer`);
+                        }else{
+                            validVarChange[k] = extend[key][k]
+                        }
+                    }
+                    validExtend[key] = validVarChange;
+                    break;
+                case "coord":
+                    if(!this.isCoordArray(extend[key])){
+                        warningCallback("\"coord\" is ignored because it is not an array or it has the wrong number of values. Must be either [x, z] or [x, y, z]");
+                        continue;
+                    }
+                    validExtend[key] = extend[key].map((x)=>Number(x) || 0);
+                    break;
+                case "movements":
+                    if(!Array.isArray(extend[key])){
+                        warningCallback("\"movements\" is ignored because it is not an array");
+                        continue;
+                    }
+                    const validMovements: any[] = [];
+                    //validMovements.push();
+                    // There is a bug in dukpy that causes an error in forEach here. So we use a regular for loop
+                    for(let i = 0; i<extend[key].length;i++){
+                        const movementobj = extend[key];
+                        if(!this.isObject(movementobj)){
+                            warningCallback(`"movements[${i}] is ignored because it is not an object"`);                   
+                        }else if(!("to" in movementobj)){
+                            warningCallback(`"movements[${i}] is ignored because it is missing the required attribute \"to\""`);
+                        }else if(!this.isCoordArray(movementobj["to"])){
+                            warningCallback(`"movements[${i}] is ignored because the \"to\" attribute is not valid."`);
+                        }else{
+                            const validMovement = {
+                                to: movementobj["to"],
+                                away: !!movementobj["away"],
+                                warp: !!movementobj["warp"]
+                            }
+                            validMovements.push(validMovement);
+                        }
+                    }
+                    // extend[key].forEach((movementobj, i)=>{
+                        
+                        
+                    // });
+                    validExtend[key] = validMovements;
+                    break;
+                default:
+                    warningCallback(`"${key}" is not a valid attribute`);
+            }
+        }
+
+        successCallback(validExtend);
+    }
+
+    private isObject(obj: any): boolean {
+        return obj && typeof obj === "object" && !Array.isArray(obj);
+    }
+
+    private isCoordArray(obj: any): boolean {
+        if(!Array.isArray(obj)){
+            return false;
+        }
+        if(obj.length !== 2 && obj.length !== 3){
+            return false;
+        }
+        return true;
     }
 }
 

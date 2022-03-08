@@ -102,11 +102,14 @@ def loadYamlFile(yamlFile):
 
 def tscompileAndInvokeBundler(obj):
     print("Compiling...")
-    with open('src/ts/RouteScript.ts', "r") as tsSrc:
-        
-        bundlerJs = dukpy.typescript_compile(" ".join(line for line in tsSrc)  )
-        with open(BUNDLER_JS, "w+") as bundlerOut:
-            bundlerOut.write(bundlerJs)
+    bundlerJs=""
+    for tsSourceName in ["version.ts", "type.ts", "switch.ts", "RouteScriptBundler.ts"]:
+        with open(f'src/ts/{tsSourceName}', "r") as tsSrc:
+            print(f"Compiling... {tsSourceName}")
+            bundlerJs += f"/// {tsSourceName}\n"
+            bundlerJs += dukpy.typescript_compile("".join(line for line in tsSrc)  )
+    with open(BUNDLER_JS, "w+") as bundlerOut:
+        bundlerOut.write(bundlerJs)
         print(f"Emitted {BUNDLER_JS}")
 
     with open('src/js/system.js', "r") as systemSrc:
