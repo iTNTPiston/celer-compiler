@@ -304,6 +304,7 @@ class RouteScriptBundler {
                 case "notes":
                 case "line-color":
                 case "split-type":
+                case "icon":
                     validExtend[key] = String(extend[key]);
                     break;
                 // Number
@@ -348,13 +349,13 @@ class RouteScriptBundler {
                     //validMovements.push();
                     // There is a bug in dukpy that causes an error in forEach here. So we use a regular for loop
                     for(let i = 0; i<extend[key].length;i++){
-                        const movementobj = extend[key];
+                        const movementobj = extend[key][i];
                         if(!this.isObject(movementobj)){
-                            warningCallback(`"movements[${i}]" is ignored because it is not an object"`);                   
+                            warningCallback(`"movements[${i}]" is ignored because it is not an object`);                   
                         }else if(!("to" in movementobj)){
-                            warningCallback(`"movements[${i}]" is ignored because it is missing the required attribute "to""`);
+                            warningCallback(`"movements[${i}]" is ignored because it is missing the required attribute "to"`);
                         }else if(!this.isCoordArray(movementobj["to"])){
-                            warningCallback(`"movements[${i}]" is ignored because the "to" attribute is not valid."`);
+                            warningCallback(`"movements[${i}]" is ignored because the "to" attribute is not valid.`);
                         }else{
                             const validMovement = {
                                 to: movementobj["to"],
