@@ -324,9 +324,11 @@ class RouteScriptBundler {
                     }
                     const validVarChange: {[key: string]: number} = {};
                     for(const k in extend[key]){
+                        // @ts-ignore
                         if(!Number.isInteger(extend[key][k])){
                             warningCallback(`Variable ${k} in var-change is ignored because it is not an integer`);
                         }else{
+                            // @ts-ignore
                             validVarChange[k] = extend[key][k]
                         }
                     }
@@ -337,6 +339,7 @@ class RouteScriptBundler {
                         warningCallback("\"coord\" is ignored because it is not an array or it has the wrong number of values. Must be either [x, z] or [x, y, z]");
                         continue;
                     }
+                    // @ts-ignore
                     validExtend[key] = extend[key].map((x)=>Number(x) || 0);
                     break;
                 case "movements":
@@ -347,10 +350,12 @@ class RouteScriptBundler {
                     const validMovements: any[] = [];
                     //validMovements.push();
                     // There is a bug in dukpy that causes an error in forEach here. So we use a regular for loop
+                    // @ts-ignore
                     for(let i = 0; i<extend[key].length;i++){
                         const movementobj = extend[key];
                         if(!this.isObject(movementobj)){
-                            warningCallback(`"movements[${i}] is ignored because it is not an object"`);                   
+                            warningCallback(`"movements[${i}] is ignored because it is not an object"`);      
+                            // @ts-ignore             
                         }else if(!("to" in movementobj)){
                             warningCallback(`"movements[${i}] is ignored because it is missing the required attribute \"to\""`);
                         }else if(!this.isCoordArray(movementobj["to"])){
