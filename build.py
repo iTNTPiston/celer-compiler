@@ -9,15 +9,19 @@ bundlerJs=""
 for tsSourceName in ["version.ts", "type.ts", "switch.ts", "RouteScriptBundler.ts"]:
     with open(f'src/ts/{tsSourceName}', "r") as tsSrc:
         print(f"Compiling... {tsSourceName}")
+        bundlerJs += f"/// {tsSourceName}\n"
         bundlerJs += dukpy.typescript_compile("".join(line for line in tsSrc)  )
 
 with open('src/js/system.js', "r") as systemSrc:
-    systemJs = "".join(line for line in systemSrc)
+    systemJs = " ".join(line for line in systemSrc)
 
 with open('src/js/invoke.js', "r") as invokeSrc:
-    invokeJs = "".join(line for line in invokeSrc)
+    invokeJs = " ".join(line for line in invokeSrc)
 
 jsCode = systemJs + bundlerJs + invokeJs
+
+# Escape hell: Need to double escape the escape sequences.. currently only \" is used
+jsCode = jsCode.replace("\\\"", "\\\\\\\"")
 
 with open('src/py/common.py', "r") as commonSrc:
     commonPy = "".join(line for line in commonSrc)

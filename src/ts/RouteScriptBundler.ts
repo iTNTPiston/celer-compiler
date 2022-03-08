@@ -319,7 +319,7 @@ class RouteScriptBundler {
                 // Special
                 case "var-change":
                     if(!this.isObject(extend[key])){
-                        warningCallback("\"var-change\" is ignored because it is not an object");
+                        warningCallback('"var-change" is ignored because it is not an object');
                         continue;
                     }
                     const validVarChange: {[key: string]: number} = {};
@@ -336,7 +336,7 @@ class RouteScriptBundler {
                     break;
                 case "coord":
                     if(!this.isCoordArray(extend[key])){
-                        warningCallback("\"coord\" is ignored because it is not an array or it has the wrong number of values. Must be either [x, z] or [x, y, z]");
+                        warningCallback('"coord" is ignored because it is not an array or it has the wrong number of values. Must be either [x, z] or [x, y, z]');
                         continue;
                     }
                     // @ts-ignore
@@ -344,7 +344,7 @@ class RouteScriptBundler {
                     break;
                 case "movements":
                     if(!Array.isArray(extend[key])){
-                        warningCallback("\"movements\" is ignored because it is not an array");
+                        warningCallback('"movements" is ignored because it is not an array');
                         continue;
                     }
                     const validMovements: any[] = [];
@@ -354,12 +354,12 @@ class RouteScriptBundler {
                     for(let i = 0; i<extend[key].length;i++){
                         const movementobj = extend[key];
                         if(!this.isObject(movementobj)){
-                            warningCallback(`"movements[${i}] is ignored because it is not an object"`);      
-                            // @ts-ignore             
+                            warningCallback(`"movements[${i}]" is ignored because it is not an object"`);
+                            // @ts-ignore         
                         }else if(!("to" in movementobj)){
-                            warningCallback(`"movements[${i}] is ignored because it is missing the required attribute \"to\""`);
+                            warningCallback(`"movements[${i}]" is ignored because it is missing the required attribute "to""`);
                         }else if(!this.isCoordArray(movementobj["to"])){
-                            warningCallback(`"movements[${i}] is ignored because the \"to\" attribute is not valid."`);
+                            warningCallback(`"movements[${i}]" is ignored because the "to" attribute is not valid."`);
                         }else{
                             const validMovement = {
                                 to: movementobj["to"],

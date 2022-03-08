@@ -156,57 +156,59 @@ def rebuildBundle(inputFile):
 def invokeJsBundle(obj):
 # JS_INJECT_NEXT_LINE
     return dukpy.evaljs("""//A dummy impl of SystemJS
-// Predefine order of module loading
-var _MODULE_LOAD_ORDER = ["./version", "./type", "./switch", "./RouteScriptBundler"];
-var _modules = { };
-var _moduleLoadIndex = 0;
-var System = {
-    register: function(deps, moduleFunction) {
-        var moduleName = _MODULE_LOAD_ORDER[_moduleLoadIndex];
-        var module = {};
-        var moduleDefinition = moduleFunction(function(name, val){ module[name] = val; });
-        // Handle imports
-        var setters = moduleDefinition.setters;
-        for(var i = 0; i<setters.length;i++){
-            // Each setter matches deps
-            var setter = setters[i];
-            setter(_modules[deps[i]]);
-        }
-        // Load module
-        moduleDefinition.execute();
-        // Store module
-        _modules[moduleName] = module;
-        _moduleLoadIndex++;
-    }
-};
-
-// JS functions not supported by dukpy, so we supply our own implementation
-var Number = function(x) {
-    return parseFloat(x);
-}
-Number.isInteger = function(x) {
-    return x !== NaN && x !== Infinity && x !== -Infinity && Math.floor(x) === x;
-}
-
-var String = function(x) {
-    return x + "";
-}
-
-var Boolean = function(x){
-    return !!x;
-}
-
-// Expose bundler
-var _getBundler = function() { return _modules["./RouteScriptBundler"]["default"]; };System.register([], function(exports_1) {
+ // Predefine order of module loading
+ var _MODULE_LOAD_ORDER = ["./version", "./type", "./switch", "./RouteScriptBundler"];
+ var _modules = { };
+ var _moduleLoadIndex = 0;
+ var System = {
+     register: function(deps, moduleFunction) {
+         var moduleName = _MODULE_LOAD_ORDER[_moduleLoadIndex];
+         var module = {};
+         var moduleDefinition = moduleFunction(function(name, val){ module[name] = val; });
+         // Handle imports
+         var setters = moduleDefinition.setters;
+         for(var i = 0; i<setters.length;i++){
+             // Each setter matches deps
+             var setter = setters[i];
+             setter(_modules[deps[i]]);
+         }
+         // Load module
+         moduleDefinition.execute();
+         // Store module
+         _modules[moduleName] = module;
+         _moduleLoadIndex++;
+     }
+ };
+ 
+ // JS functions not supported by dukpy, so we supply our own implementation
+ var Number = function(x) {
+     return parseFloat(x);
+ }
+ Number.isInteger = function(x) {
+     return x !== NaN && x !== Infinity && x !== -Infinity && Math.floor(x) === x;
+ }
+ 
+ var String = function(x) {
+     return x + "";
+ }
+ 
+ var Boolean = function(x){
+     return !!x;
+ }
+ 
+ // Expose bundler
+ var _getBundler = function() { return _modules["./RouteScriptBundler"]["default"]; };/// version.ts
+System.register([], function(exports_1) {
     var TARGET_VERSION;
     return {
         setters:[],
         execute: function() {
             // Target compiler version
-            exports_1("TARGET_VERSION", TARGET_VERSION = "2.0.0");
+            exports_1("TARGET_VERSION", TARGET_VERSION = "2.0.1");
         }
     }
 });
+/// type.ts
 System.register([], function(exports_1) {
     return {
         setters:[],
@@ -214,6 +216,7 @@ System.register([], function(exports_1) {
         }
     }
 });
+/// switch.ts
 // Helper functions to encapsulate error handling when parsing route script
 System.register([], function(exports_1) {
     var switchSection, switchModule, switchStep, switchSinglePropertyObject;
@@ -282,6 +285,7 @@ System.register([], function(exports_1) {
         }
     }
 });
+/// RouteScriptBundler.ts
 System.register(["./switch", "./version"], function(exports_1) {
     var switch_1, version_1;
     var __use__, ENABLE_DEBUG, debugInfo, RouteScriptBundler;
@@ -599,7 +603,7 @@ System.register(["./switch", "./version"], function(exports_1) {
                             // Special
                             case "var-change":
                                 if (!this.isObject(extend[key])) {
-                                    warningCallback("\"var-change\" is ignored because it is not an object");
+                                    warningCallback('"var-change" is ignored because it is not an object');
                                     continue;
                                 }
                                 var validVarChange = {};
@@ -615,14 +619,14 @@ System.register(["./switch", "./version"], function(exports_1) {
                                 break;
                             case "coord":
                                 if (!this.isCoordArray(extend[key])) {
-                                    warningCallback("\"coord\" is ignored because it is not an array or it has the wrong number of values. Must be either [x, z] or [x, y, z]");
+                                    warningCallback('"coord" is ignored because it is not an array or it has the wrong number of values. Must be either [x, z] or [x, y, z]');
                                     continue;
                                 }
                                 validExtend[key] = extend[key].map(function (x) { return Number(x) || 0; });
                                 break;
                             case "movements":
                                 if (!Array.isArray(extend[key])) {
-                                    warningCallback("\"movements\" is ignored because it is not an array");
+                                    warningCallback('"movements" is ignored because it is not an array');
                                     continue;
                                 }
                                 var validMovements = [];
@@ -631,13 +635,13 @@ System.register(["./switch", "./version"], function(exports_1) {
                                 for (var i = 0; i < extend[key].length; i++) {
                                     var movementobj = extend[key];
                                     if (!this.isObject(movementobj)) {
-                                        warningCallback("\"movements[" + i + "] is ignored because it is not an object\"");
+                                        warningCallback("\\\"movements[" + i + "]\\\" is ignored because it is not an object\\\"");
                                     }
                                     else if (!("to" in movementobj)) {
-                                        warningCallback("\"movements[" + i + "] is ignored because it is missing the required attribute \"to\"\"");
+                                        warningCallback("\\\"movements[" + i + "]\\\" is ignored because it is missing the required attribute \\\"to\\\"\\\"");
                                     }
                                     else if (!this.isCoordArray(movementobj["to"])) {
-                                        warningCallback("\"movements[" + i + "] is ignored because the \"to\" attribute is not valid.\"");
+                                        warningCallback("\\\"movements[" + i + "]\\\" is ignored because the \\\"to\\\" attribute is not valid.\\\"");
                                     }
                                     else {
                                         var validMovement = {
@@ -653,7 +657,7 @@ System.register(["./switch", "./version"], function(exports_1) {
                                 validExtend[key] = validMovements;
                                 break;
                             default:
-                                warningCallback("\"" + key + "\" is not a valid attribute");
+                                warningCallback("\\\"" + key + "\\\" is not a valid attribute");
                         }
                     }
                     successCallback(validExtend);
@@ -677,7 +681,7 @@ System.register(["./switch", "./version"], function(exports_1) {
     }
 });
 // Input JSON passed from python
-_getBundler().bundle(dukpy.input);
+ _getBundler().bundle(dukpy.input);
 """, input=obj)
 
 __main__()
