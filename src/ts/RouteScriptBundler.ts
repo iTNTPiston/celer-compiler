@@ -353,6 +353,7 @@ class RouteScriptBundler {
                     // There is a bug in dukpy that causes an error in forEach here. So we use a regular for loop
                     // @ts-ignore
                     for(let i = 0; i<extend[key].length;i++){
+                        // @ts-ignore
                         const movementobj = extend[key][i];
                         if(!this.isObject(movementobj)){
                             warningCallback(`"movements[${i}]" is ignored because it is not an object`);     
