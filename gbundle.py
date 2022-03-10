@@ -192,7 +192,7 @@ System.register([], function(exports_1) {
         setters:[],
         execute: function() {
             // Target compiler version
-            exports_1("TARGET_VERSION", TARGET_VERSION = "2.0.2");
+            exports_1("TARGET_VERSION", TARGET_VERSION = "2.1.0");
         }
     }
 });
@@ -597,10 +597,12 @@ System.register(["./switch", "./version"], function(exports_1) {
                                 }
                                 var validVarChange = {};
                                 for (var k in extend[key]) {
+                                    // @ts-ignore
                                     if (!Number.isInteger(extend[key][k])) {
                                         warningCallback("Variable " + k + " in var-change is ignored because it is not an integer");
                                     }
                                     else {
+                                        // @ts-ignore
                                         validVarChange[k] = extend[key][k];
                                     }
                                 }
@@ -611,6 +613,7 @@ System.register(["./switch", "./version"], function(exports_1) {
                                     warningCallback('"coord" is ignored because it is not an array or it has the wrong number of values. Must be either [x, z] or [x, y, z]');
                                     continue;
                                 }
+                                // @ts-ignore
                                 validExtend[key] = extend[key].map(function (x) { return Number(x) || 0; });
                                 break;
                             case "movements":
@@ -621,7 +624,9 @@ System.register(["./switch", "./version"], function(exports_1) {
                                 var validMovements = [];
                                 //validMovements.push();
                                 // There is a bug in dukpy that causes an error in forEach here. So we use a regular for loop
+                                // @ts-ignore
                                 for (var i = 0; i < extend[key].length; i++) {
+                                    // @ts-ignore
                                     var movementobj = extend[key][i];
                                     if (!this.isObject(movementobj)) {
                                         warningCallback("\\\"movements[" + i + "]\\\" is ignored because it is not an object");
@@ -641,9 +646,16 @@ System.register(["./switch", "./version"], function(exports_1) {
                                         validMovements.push(validMovement);
                                     }
                                 }
-                                // extend[key].forEach((movementobj, i)=>{
-                                // });
                                 validExtend[key] = validMovements;
+                                break;
+                            case "commands":
+                                // @ts-ignore
+                                if (!Array.isArray(extend[key])) {
+                                    warningCallback('"commands" is ignored because it is not an array');
+                                    continue;
+                                }
+                                // @ts-ignore
+                                validExtend[key] = extend[key].map(function (x) { return String(x); });
                                 break;
                             default:
                                 warningCallback("\\\"" + key + "\\\" is not a valid attribute");

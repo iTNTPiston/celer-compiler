@@ -371,11 +371,16 @@ class RouteScriptBundler {
                             validMovements.push(validMovement);
                         }
                     }
-                    // extend[key].forEach((movementobj, i)=>{
-                        
-                        
-                    // });
                     validExtend[key] = validMovements;
+                    break;
+                case "commands":
+                    // @ts-ignore
+                    if(!Array.isArray(extend[key])){
+                        warningCallback('"commands" is ignored because it is not an array');
+                        continue;
+                    }
+                    // @ts-ignore
+                    validExtend[key] = extend[key].map((x)=>String(x));
                     break;
                 default:
                     warningCallback(`"${key}" is not a valid attribute`);

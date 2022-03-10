@@ -29,6 +29,7 @@ export type RouteScriptExtend = {
     "split-type"?: string,
     "var-change"?: {[key: string]: number},
     "time-override"?: number,
+    commands?: string[],
     coord?: number[],
     movements?: {
         to: number[],
