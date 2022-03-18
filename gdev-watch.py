@@ -99,7 +99,7 @@ def rebundleHelper(inputPath, doEmitRaw, isCompact, bundleFunc):
         print("Failed to bundle")
 
 def loadYamlPath(yamlPath, obj):
-    if os.path.isfile(yamlPath) and yamlPath.endswith(".yaml"):
+    if os.path.isfile(yamlPath) and (yamlPath.endswith(".yaml") or yamlPath.endswith(".celer")):
         obj.update(loadYamlFile(yamlPath))
     elif os.path.isdir(yamlPath):
         for subpath in os.listdir(yamlPath):

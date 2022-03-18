@@ -1,3 +1,5 @@
+**celer-compiler is moving toward a better CLI interface. The bundler will still work with celer-engine in the mean time. In the future, you might need to switch to the newer CLI, but you will not need to change the route file content**
+
 # celer-compiler
 Bundler for celer route engine.
 
