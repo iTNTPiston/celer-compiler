@@ -39,7 +39,7 @@ class Handler(FileSystemEventHandler):
         self.inputFile = inputFile
         self.rebuildFunc = rebuildFunc
     def on_any_event(self, event):
-        if event.src_path.endswith(".yaml") or event.src_path.endswith(".ts") or yamlPath.endswith(".celer"):
+        if event.src_path.endswith(".yaml") or event.src_path.endswith(".ts") or event.src_path.endswith(".celer"):
             print(f"Rebuilding... {self.inputFile}")
             self.rebuildFunc(self.inputFile)
 
